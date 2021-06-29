@@ -18,7 +18,8 @@ class Agent:
 		self.gamma = 0.9 # discount rate
 		self.memory = deque(maxlen=MAX_MEMORY) # automatically remove the oldes memory
 		self.model = Linear_QNet(11,256,3)
-		self.trainer = QTrainer(self.model,LR,self.gamma)
+		self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
+
 
 	def get_state(self, game):
 		'''get the state of the game:
@@ -42,7 +43,7 @@ class Agent:
 		point_r = Point(head.x + 20, head.y)
 		point_u = Point(head.x, head.y - 20)
 		point_d = Point(head.x, head.y + 20)
-
+		
 		# current direction
 		dir_l = game.direction == Direction.LEFT
 		dir_r = game.direction == Direction.RIGHT
@@ -52,40 +53,40 @@ class Agent:
 		# create the state
 		state = [
 			# Danger straight
-			(dir_l and game.is_collision(point_l)) or
-			(dir_r and game.is_collision(point_r)) or
-			(dir_u and game.is_collision(point_u)) or
+			(dir_r and game.is_collision(point_r)) or 
+			(dir_l and game.is_collision(point_l)) or 
+			(dir_u and game.is_collision(point_u)) or 
 			(dir_d and game.is_collision(point_d)),
 
 			# Danger right
-			(dir_u and game.is_collision(point_r)) or
-			(dir_d and game.is_collision(point_l)) or
-			(dir_l and game.is_collision(point_u)) or
+			(dir_u and game.is_collision(point_r)) or 
+			(dir_d and game.is_collision(point_l)) or 
+			(dir_l and game.is_collision(point_u)) or 
 			(dir_r and game.is_collision(point_d)),
 
 			# Danger left
-			(dir_d and game.is_collision(point_r)) or
-			(dir_u and game.is_collision(point_l)) or
-			(dir_r and game.is_collision(point_u)) or
+			(dir_d and game.is_collision(point_r)) or 
+			(dir_u and game.is_collision(point_l)) or 
+			(dir_r and game.is_collision(point_u)) or 
 			(dir_l and game.is_collision(point_d)),
-
+			
 			# move direction
 			dir_l,
 			dir_r,
 			dir_u,
 			dir_d,
-
-			# food location
+			
+			# food location 
 			game.food.x < game.head.x, # food left
 			game.food.x > game.head.x, # food right
 			game.food.y < game.head.y, # food up
 			game.food.y > game.head.y  # food down
-		]
-		
-		return state
+			]
+
+		return np.array(state, dtype=int)
 
 	def remember(self, state, action, reward, next_state, done):
-		self.memory.append((state, action, reward, next_state, done)) # popleft if max_mem is reach
+		self.memory.append((state, action, reward, next_state, done)) # popleft if MAX_MEMORY is reached
 
 	def train_long_memory(self):
 		if len(self.memory) > BATCH_SIZE:
@@ -111,8 +112,9 @@ class Agent:
 			prediction = self.model(state0) # prediction is still a raw value like [5.0, 2.3, 1.8]
 			move = torch.argmax(prediction).item() # get index of max value [5.0, 2.3, 1.8] -> 0
 			final_move[move] = 1
-		
+
 		return final_move
+
 
 def train():
 	plot_scores = []
@@ -157,6 +159,5 @@ def train():
 			plot(plot_scores,plot_mean_scores)
 
 
-
-if __name__=="__main__":
+if __name__=='__main__':
 	train()

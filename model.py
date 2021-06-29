@@ -10,7 +10,7 @@ class Linear_QNet(nn.Module):
 		super().__init__()
 		self.linear1 = nn.Linear(input_size, hidden_size)
 		self.linear2 = nn.Linear(hidden_size, output_size)
-	
+
 	def forward(self, x):
 		x = F.relu(self.linear1(x))
 		x = self.linear2(x)
@@ -57,8 +57,8 @@ class QTrainer():
 			Q_new = reward[idx]
 			if not done[idx]:
 				Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
-			target[idx][torch.argmax(action).item()] = Q_new
-		
+			target[idx][torch.argmax(action[idx]).item()] = Q_new
+	
 		self.optimizer.zero_grad()
 		loss = self.criterion(target,pred)
 		loss.backward()
