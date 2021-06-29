@@ -82,6 +82,7 @@ class Agent:
 			game.food.y > game.head.y  # food down
 		]
 		
+		return state
 
 	def remember(self, state, action, reward, next_state, done):
 		self.memory.append((state, action, reward, next_state, done)) # popleft if max_mem is reach
