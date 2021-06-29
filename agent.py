@@ -123,6 +123,7 @@ def train():
 	record = 0
 	agent = Agent()
 	game = SnakeGameAI()
+	agent.model.load()
 	while True:
 		# 1. get the old state
 		state_old = agent.get_state(game)

@@ -24,7 +24,7 @@ BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
-SPEED = 40
+SPEED = 60
 
 class SnakeGameAI:
 
@@ -112,13 +112,21 @@ class SnakeGameAI:
 	def _update_ui(self):
 		self.display.fill(BLACK)
 
+		# draw snake
 		for pt in self.snake:
 			pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
 			pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
+		
+		# snake vision
+		pygame.draw.rect(self.display, WHITE, pygame.Rect(self.snake[0].x - 2*BLOCK_SIZE, self.snake[0].y - 2*BLOCK_SIZE, 5*BLOCK_SIZE, 5*BLOCK_SIZE), 3)
 
+		# draw food
 		pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
 
+		# draw score
 		text = font.render("Score: " + str(self.score), True, WHITE)
+		
+		# update screen
 		self.display.blit(text, [0, 0])
 		pygame.display.flip()
 
