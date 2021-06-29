@@ -3,6 +3,7 @@ import random
 import numpy as np
 from collections import deque
 from snake_game import SnakeGameAI, Direction, Point
+from model import Linear_QNet, QTrainer
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -13,14 +14,24 @@ class Agent:
 	def __init__(self):
 		self.n_games = 0
 		self.epsilon = 0 # randomness
-		self.gamma = 0 # discount rate
+		self.gamma = 0.9 # discount rate
 		self.memory = deque(maxlen=MAX_MEMORY) # automatically remove the oldes memory
-		self.mode = None # TODO
-		self.trainer = None # TODO
+		self.model = Linear_QNet(11,256,3)
+		self.trainer = QTrainer(self.model,LR,self.gamma)
 
 	def get_state(self, game):
 		'''get the state of the game:
-		    - head of the snake
+			- danger straight
+			- danger left
+			- danger right
+			- moving left
+			- moving right
+			- moving up
+			- moving down
+			- food left
+			- food right
+			- food up
+			- food down
 		'''
 		# head of the snake
 		head = game.snake[0]
@@ -95,7 +106,7 @@ class Agent:
 			final_move[move] = 1
 		else:
 			state0 = torch.tensor(state, dtype=torch.float)
-			prediction = self.model.predict(state0) # prediction is still a raw value like [5.0, 2.3, 1.8]
+			prediction = self.model(state0) # prediction is still a raw value like [5.0, 2.3, 1.8]
 			move = torch.argmax(prediction).item() # get index of max value [5.0, 2.3, 1.8] -> 0
 			final_move[move] = 1
 		
@@ -133,7 +144,7 @@ def train():
 			# set new record
 			if score > record:
 				record = score
-				# if new record, save the model
+				agent.model.save()
 
 			# plot the results
 			print('Game: {} \tScore: {}\tRecord: {}'.format(agent.n_games,score,record))
