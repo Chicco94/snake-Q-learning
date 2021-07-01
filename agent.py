@@ -5,10 +5,13 @@ from collections import deque
 from snake_game import SnakeGameAI, Direction, Point
 from model import Linear_QNet, QTrainer
 from helper import plot
+from time import sleep
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
+RESUME = True
+RESUME_FILE_NAME = "model_69.pth"
 
 class Agent:
 
@@ -17,7 +20,7 @@ class Agent:
 		self.epsilon = 0 # randomness
 		self.gamma = 0.9 # discount rate
 		self.memory = deque(maxlen=MAX_MEMORY) # automatically remove the oldes memory
-		self.model = Linear_QNet(11,256,3)
+		self.model = Linear_QNet(36,256,3)
 		self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
 
@@ -80,7 +83,10 @@ class Agent:
 			game.food.x < game.head.x, # food left
 			game.food.x > game.head.x, # food right
 			game.food.y < game.head.y, # food up
-			game.food.y > game.head.y  # food down
+			game.food.y > game.head.y, # food down
+
+			# snake vision
+			*game.snake_vision()
 			]
 
 		return np.array(state, dtype=int)
@@ -119,11 +125,19 @@ class Agent:
 def train():
 	plot_scores = []
 	plot_mean_scores = []
+	plot_mean_last_10_scores = []
 	total_score = 0
 	record = 0
 	agent = Agent()
 	game = SnakeGameAI()
-	agent.model.load()
+	
+	if (RESUME):
+		file_name="./models/{}".format(RESUME_FILE_NAME)
+		checkpoint = torch.load(file_name)
+		agent.model.load_state_dict(checkpoint['state_dict'])
+		agent.trainer.optimizer.load_state_dict(checkpoint['optimizer'])
+		agent.n_games = checkpoint['epoch']
+
 	while True:
 		# 1. get the old state
 		state_old = agent.get_state(game)
@@ -149,15 +163,24 @@ def train():
 			# set new record
 			if score > record:
 				record = score
-				agent.model.save()
+				checkpoint = {
+					'epoch': agent.n_games,
+					'state_dict': agent.model.state_dict(),
+					'optimizer': agent.trainer.optimizer.state_dict()
+				}
+				file_name="model_{}.pth".format(record)
+				agent.model.save(checkpoint,file_name)
 
 			# plot the results
-			print('Game: {} \tScore: {}\tRecord: {}'.format(agent.n_games,score,record))
 			plot_scores.append(score)
 			total_score += score
 			mean_score = total_score/agent.n_games
 			plot_mean_scores.append(mean_score)
-			plot(plot_scores,plot_mean_scores)
+			if (len(plot_scores) > 10 ):
+				plot_mean_last_10_scores.append(sum(plot_scores[-10:])/10)
+			else:
+				plot_mean_last_10_scores.append(0)
+			plot(plot_scores,plot_mean_scores,plot_mean_last_10_scores)
 
 
 if __name__=='__main__':

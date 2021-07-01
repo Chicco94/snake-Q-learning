@@ -28,13 +28,14 @@ SPEED = 60
 
 class SnakeGameAI:
 
-	def __init__(self, w=640, h=480):
+	def __init__(self, w=640, h=480, game_n=1):
 		self.w = w
 		self.h = h
 		# init display
 		self.display = pygame.display.set_mode((self.w, self.h))
 		pygame.display.set_caption('Snake')
 		self.clock = pygame.time.Clock()
+		self.game_n = game_n
 
 		self.reset()
 
@@ -49,6 +50,7 @@ class SnakeGameAI:
 					  Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
 
 		self.score = 0
+		self.game_n += 1
 		self.food = None
 		self._place_food()
 		self.frame_iteration = 0
@@ -60,6 +62,26 @@ class SnakeGameAI:
 		self.food = Point(x, y)
 		if self.food in self.snake:
 			self._place_food()
+
+	def snake_vision(self):
+		''' return an array with -1 where there is a border or the snake, 1 where there is food 0 aywhere'''
+		# vision_corners
+		left_upper_corner = Point(self.snake[0].x - 2*BLOCK_SIZE, self.snake[0].y - 2*BLOCK_SIZE)
+
+		vision_grid = [0 for _ in range(25)]
+		for row in range (5):
+			point_x = left_upper_corner.x+row*BLOCK_SIZE
+			for col in range(5):
+				point_y = left_upper_corner.y+col*BLOCK_SIZE
+				point = Point(point_x,point_y)
+				index = row*5+col
+				# if I collide with myself or a wall
+				if self.is_collision(point):
+					vision_grid[index] = -1
+				# if there is an apple I keep it in mind
+				if self.food == self.head:
+					vision_grid[index] = 1
+		return vision_grid
 
 	def play_step(self,action):
 		'''Play a step based on a action, '''
@@ -124,7 +146,7 @@ class SnakeGameAI:
 		pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
 
 		# draw score
-		text = font.render("Score: " + str(self.score), True, WHITE)
+		text = font.render("Score: {} Game: {}".format(str(self.score),str(self.game_n)), True, WHITE)
 		
 		# update screen
 		self.display.blit(text, [0, 0])
